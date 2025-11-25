@@ -1,0 +1,471 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+        <title>欢迎使用Nino</title>
+        <script src="https://upcdn.b0.upaiyun.com/libs/jquery/jquery-2.0.2.min.js"></script>
+    </head>
+    <body>
+        <div class="layout-container">
+            <div class="left-image">
+                <img src="{{ left_image }}" alt="主题图片" class="theme-image">
+            </div>
+            
+            <div class="right-content">
+                <div id="menu">
+                    <h1>Nino🍥</h1>
+                    <span><a href="/data">数据中心</a> | <a href="#" id="config">设置</a> | <a href="#" id="about">关于</a></span>
+                </div>
+                <div id="talk">
+                    {% for content, content_type in context_list | zip(context_type_list) %}
+                        <span class="message {{ content_type }}">{{ content }}</span>
+                    {% endfor %}
+                    <span class="message user" id="submit_show_user"></span>
+                    <span class="message shell" id="submit_show_shell">等待对方回复...</span>
+                    <form action="/send" method="post" id="form" enctype="multipart/form-data">
+                        <div id="user-input-from">
+                            <input type="text" required maxlength="100" name="content" id="content" placeholder="发送消息...">
+                            <input type="file" name="attachment_file" id="attachment_file" accept=".txt">
+                            <input type="submit" value="发送" id="submit" >
+                        </div>
+                        <input type="checkbox" {% if reasoner %} checked="on" {% endif %} name="reasoner" id="reasoner">
+                        <label for="reasoner" id="reasoner-text">使用思考模型</label>
+                        <input type="checkbox" {% if memory %} checked="on" {% endif %} name="memory" id="memory">
+                        <label for="memory" id="memory-text">允许写入长期记忆</label>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-mask"></div>
+        <div class="modal">
+            <span class="modal-close">X</span>
+            <div class="modal-content">
+                <h2 class="modal-title">Nino🍥</h2>
+                <p class="modal-version">ver 1.7.0</p>
+                <div class="modal-info">
+                    <p>作者：Pinpe</p>
+                    <p>鸣谢：lyp0746</p>
+                    <p>技术栈：Python、Flask、jQuery</p>
+                    <p>依赖：flask、requests、openai</p>
+                    <p>开源协议：GPL-3</p>
+                    <p>官网：<a href="https://pinpe.top" target="_blank" class="modal-link">pinpe.top</a></p>
+                </div>
+                <div class="modal-desc">
+                    <p>Nino是AI聊天软件，会尝试了解你，理解你，并且可以永远记住重要记忆，会根据用户输入、上下文、长期记忆库和外部环境对你返回可爱的回复，可用于聊天和日常心理调适。</p>
+                    <p>Nino是开源的，跨平台的，轻量级的，Nino的所有数据均在本地，仅在需要时会把一部分数据发送给第三方API。</p>
+                    <p>请注意：AI的回复可能会因为幻觉导致事实、观点等错误，不一定是完全正确的，请有基本的判断能力，Nino及其作者不为此付出任何责任。</p>
+                </div>
+            </div>
+        </div>
+        <div class="config-modal">
+            <span class="config-modal-close">X</span>
+            <div class="config-modal-content">
+                <h1>设置</h1>
+                <div class="modal-desc"><p>你可以在这里修改Nino的配置，这里的选项将永久存储，此卡片也会在第一次使用时弹出。</p></div>
+                <form action="/config" method="post">
+                        <input type="checkbox" {% if show_memory %} checked="on" {% endif %} name="show-memory" id="show-memory">
+                        <label for="show-memory" id="show-memory-text" style="margin-bottom: 15px;">显示新添加的长期记忆</label><br>
+                        <label for="location" id="location-text">居住城市：</label>
+                        <input type="text" value="{{ location }}" required maxlength="5" name="location" id="location" style="margin-bottom: 10px;"><br>
+                        <label for="left-image" id="location-text">背景图URL：</label>
+                        <input type="text" value="{{ left_image }}" required name="left-image" id="left-image-src" style="margin-bottom: 10px;">
+                        <label for="left-image" id="location-text">模型的base_url：</label>
+                        <input type="text" value="{{ model_base_url }}" required name="model-base-url" id="left-image-src" style="margin-bottom: 10px;">
+                        <label for="left-image" id="location-text">思考模型名称：</label>
+                        <input type="text" value="{{ reasoner_model }}" required name="reasoner-model" id="location" style="margin-bottom: 10px; width: 180px;"><br>
+                        <label for="left-image" id="location-text">非思考模型名称：</label>
+                        <input type="text" value="{{ common_model }}" required name="common-model" id="location" style="margin-bottom: 15px; width: 180px;">
+                        <br>
+                        <input type="submit" value="保存并关闭" id="submit" >
+                </form>
+            </div>
+        </div>
+
+        <script>
+            $(function(){
+                first_use = ({{ first_use }});
+                
+                // 初始状态隐藏
+                $('#submit_show_user').hide();
+                $('#submit_show_shell').hide();
+                $('.modal-mask, .modal, .config-modal').hide();
+
+                if (first_use == true) {
+                    // 如果是首次使用，优雅地显示设置弹窗
+                    $('.modal-mask').fadeIn(5);
+                    $('.config-modal').show(); // CSS动画处理弹出效果
+                }
+            })
+
+            $('#form').submit(function(){
+                $('#submit').attr('disabled', 'true')
+                $('#submit_show_user').text($('#content').val()).show()
+                $('#submit_show_shell').show()
+            })
+
+            // 关于按钮点击事件 - 添加动画效果
+            $('#about').click(function(e){
+                e.preventDefault();
+                $('.modal-mask').fadeIn(5); // 背景渐显
+                $('.modal').show(); // 卡片弹出 (CSS Animation)
+            })
+
+            // 设置按钮点击事件 - 添加动画效果
+            $('#config').click(function(e){
+                e.preventDefault();
+                $('.modal-mask').fadeIn(5);
+                $('.config-modal').show();
+            })
+
+            // 关闭弹窗 - 添加动画效果
+            $('.modal-close, .config-modal-close').click(function(){
+                $('.modal-mask').fadeOut(0); // 背景渐隐
+                // 卡片渐隐 (jQuery的fadeOut会处理opacity，覆盖CSS动画结束状态)
+                $('.config-modal, .modal').fadeOut(0); 
+            })
+        </script>
+
+        <style>
+            @font-face {
+                font-family: font;
+                src: url({{ url_for('static', filename='font.ttf') }});
+            }
+            * {
+                font-family: font;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background-color: #fff9f0;
+                color: #5D4037;
+                min-height: 100vh;
+                padding: 0;
+                margin: 0 auto;
+                line-height: 1.6;
+            }
+
+            #menu a{
+                color: #5D4037;
+                text-decoration: none;
+                transition: all 0.15s ease;
+            }
+
+            #menu a:hover{
+                background-color: #00000019;
+            }
+
+            .layout-container {
+                width: 100%;
+                min-height: 100vh;
+            }
+
+            /* 左侧图片绝对固定 */
+            .left-image {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 33.333%;
+                height: 100vh;
+                overflow: hidden;
+                z-index: 999;
+            }
+
+            .theme-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+                display: block;
+            }
+
+            /* 右侧内容区避开左侧固定区域 */
+            .right-content {
+                width: 66.666%;
+                min-height: 100vh;
+                padding: 20px 15px;
+                max-width: 800px;
+                margin-left: 40%;
+                overflow-y: auto;
+            }
+
+            title {
+                display: none;
+            }
+
+            #talk {
+                padding: 25px 20px;
+                margin-bottom: 30px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .message {
+                display: inline-block;
+                padding: 10px 18px;
+                border-radius: 22px;
+                max-width: 75%;
+                word-wrap: break-word;
+            }
+
+            .message.user {
+                background-color: #FFE0B2;
+                margin-left: auto;
+            }
+
+            .message.ai {
+                background-color: #ffefd8;
+                margin-right: auto;
+            }
+
+            .message.shell{
+                color: #5d403783;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            #menu{
+                padding: 25px 40px;
+            }
+
+            form{
+                align-items: center;
+                padding: 15px 20px;
+            }
+
+            #user-input-from {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-bottom: 12px;
+            }
+
+            #reasoner, #memory, #show-memory {
+                accent-color: #FFE0B2;
+                display: inline-block;
+            }
+            #memory{
+                margin-left: 20px;
+            }
+
+            label {
+                color: #795548;
+                font-size: 14px;
+                cursor: pointer;
+                display: inline-block;
+            }
+
+            #content {
+                flex: 1;
+                min-width: 200px;
+                padding: 12px 15px;
+                border: 2px solid #FFE0B2;
+                border-radius: 25px;
+                font-size: 15px;
+                transition: all 0.3s ease;
+            }
+
+            #content::placeholder {
+                color: #D7CCC8;
+            }
+
+            #content:focus {
+                outline: none;
+                border-color: #FF9800;
+            }
+
+            #location, #left-image-src {
+                padding: 5px 15px;
+                width: 100px;
+                border: 2px solid #FFE0B2;
+                border-radius: 25px;
+                font-size: 15px;
+                transition: all 0.3s ease;
+            }
+
+            #left-image-src{
+                width: 400px;
+            }
+
+            #location:focus {
+                outline: none;
+                border-color: #FF9800;
+            }
+
+            #left-image-src:focus{
+                outline: none;
+                border-color: #FF9800;
+            }
+
+            #submit, input::file-selector-button {
+                background-color: #FFE0B2;
+                border: none;
+                padding: 12px 25px;
+                border-radius: 25px;
+                font-size: 15px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.1s ease;
+                color: #5D4037;
+            }
+
+            #submit:hover {
+                transform: translateY(-2px);
+            }
+
+            #submit:active {
+                transform: translateY(0);
+            }
+
+            #attachment_file{
+                width: 114px;
+            }
+
+            /* 新增：弹窗动画定义 */
+            @keyframes modal-in {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -40%) scale(0.95);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+
+            /* 新增：弹窗样式 */
+            .modal-mask {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                backdrop-filter: blur(5px); /* 稍微调小了一点模糊，提升性能 */
+                transition: opacity 0.3s ease; /* 添加过渡 */
+            }
+
+            .modal, .config-modal {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                /* transform 由动画控制，初始状态在 keyframes 0% 中定义 */
+                transform: translate(-50%, -50%); 
+                background-color: #fff9f0;
+                border-radius: 20px;
+                padding: 30px;
+                width: 100%;
+                max-width: 850px;
+                z-index: 1001;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* 阴影加深一点更有层次感 */
+                
+                /* 应用动画：当 display: block 时触发 */
+                animation: modal-in 0.2s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+            }
+
+            .config-modal{
+                max-width: 550px;
+            }
+
+            .modal-desc p {
+                margin-bottom: 8px;
+            }
+
+            .modal-close, .config-modal-close {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                font-size: 18px;
+                color: #5D4037;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background-color: #f5f0e6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+            }
+
+            .modal-close:hover {
+                background-color: #ede5d8;
+            }
+
+            .config-modal-close:hover {
+                background-color: #ede5d8;
+            }
+
+            .modal-content {
+                text-align: center;
+                margin-top: 10px;
+            }
+
+            .modal-title {
+                font-size: 55px;
+                color: #5D4037;
+                margin-bottom: 8px;
+            }
+
+            .modal-version {
+                font-size: 14px;
+                color: #795548;
+                margin-bottom: 20px;
+                margin-top: -10px;
+            }
+
+            .modal-info {
+                margin-bottom: 20px;
+                line-height: 1.8;
+                text-align: left;
+            }
+
+            .modal-link {
+                color: #5D4037;
+                text-decoration: none;
+                transition: text-decoration 0.2s ease;
+            }
+
+            .modal-link:hover {
+                text-decoration: underline;
+            }
+
+            .modal-desc {
+                color: #5D4037;
+                line-height: 1.8;
+                text-align: left;
+            }
+
+            /* 响应式调整 */
+            @media (max-width: 768px) {
+                .left-image {
+                    position: relative;
+                    width: 100%;
+                    height: 30vh;
+                }
+                .right-content {
+                    width: 100%;
+                    min-height: 70vh;
+                    margin-left: 0;
+                    padding: 20px 15px;
+                }
+                #menu {
+                    padding: 25px 20px;
+                }
+                /* 弹窗响应式调整 */
+                .modal {
+                    padding: 25px 20px;
+                    max-width: 95%;
+                }
+                .modal-title {
+                    font-size: 28px;
+                }
+            }
+        </style>
+    </body>
+</html>

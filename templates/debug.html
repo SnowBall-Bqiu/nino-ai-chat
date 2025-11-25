@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+        <title>调试页面</title>
+    </head>
+    <body>
+        <h1>调试页面</h1>
+        <span>{{ time }}</span><br>
+        <h3>天气api返回</h3>
+        <span>{{ weather }}</span>
+        <h3>长期记忆（memory.json）</h3>
+        <ul>
+            {% for i in memory_list %}
+                <li>{{ i }}</li>
+            {% endfor %}
+        </ul>
+        <h3>上下文（context.json）</h3>
+        <ul>
+            {% for i in context_list %}
+                <li>{{ i }}</li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
