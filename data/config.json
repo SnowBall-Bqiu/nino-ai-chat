@@ -1,1 +1,1 @@
-{"location": "\u5e38\u5dde", "show_memory": true, "left_image": "http://127.0.0.1:5000/static/theme-img.webp", "first_use": "true", "model_base_url": "https://api.deepseek.com", "reasoner_model": "deepseek-reasoner", "common_model": "deepseek-chat"}
+{"location": "\u5e38\u5dde", "show_memory": true, "left_image": "http://127.0.0.1:5000/static/theme-img.webp", "first_use": "true", "model_base_url": "https://api.deepseek.com", "reasoner_model": "deepseek-reasoner", "common_model": "deepseek-chat", "login_password": ""}

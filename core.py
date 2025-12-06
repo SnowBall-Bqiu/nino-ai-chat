@@ -1,7 +1,7 @@
 from openai import OpenAI
 import requests
 import textwrap
-import json
+import data
 import time
 
 def get_ai(prompt: str, reasoner: bool) -> str:
@@ -13,11 +13,11 @@ def get_ai(prompt: str, reasoner: bool) -> str:
     '''
     try:
         client = OpenAI(
-            api_key  = load_data()['env']['ai_api_key'],
-            base_url = load_data()['config']['model_base_url']
+            api_key  = data.load_data()['env']['ai_api_key'],
+            base_url = data.load_data()['config']['model_base_url']
         )
         response = client.chat.completions.create(
-            model    = load_data()['config']['reasoner_model'] if reasoner==True else load_data()['config']['common_model'],
+            model    = data.load_data()['config']['reasoner_model'] if reasoner==True else data.load_data()['config']['common_model'],
             stream   = False,
             messages = [{
                 "role":    "user",
@@ -35,7 +35,7 @@ def get_weather(location: str) -> dict[str]:
     :param location: 城市名称。
     '''
     try:
-        weather = requests.get(f'https://api.seniverse.com/v3/weather/now.json?key={load_data()['env']['weather_api_key']}&location={location}').json()
+        weather = requests.get(f'https://api.seniverse.com/v3/weather/now.json?key={data.load_data()['env']['weather_api_key']}&location={location}').json()
         return {
             'text':        weather['results'][0]['now']['text'],
             'temperature': weather['results'][0]['now']['temperature']
@@ -46,7 +46,7 @@ def get_weather(location: str) -> dict[str]:
             'temperature': '暂无'
         }
 
-def get_latest_version() -> str:
+def get_latest_version() -> str | None:
     '''
     获取Nino的最新版本，当获取失败时返回None。
     '''
@@ -54,70 +54,6 @@ def get_latest_version() -> str:
         return requests.get('https://pinpe.github.io/nino-ai-chat/latest_version').text
     except (requests.ConnectTimeout, requests.ConnectionError):
         return None
-
-def load_data() -> dict[str]:
-    '''
-    从数据库和环境变量加载数据。
-    '''
-    return {
-        'context': json.load(open('data/context.json', encoding='UTF-8')),
-        'memory':  json.load(open('data/memory.json', encoding='UTF-8')),
-        'config':  json.load(open('data/config.json', encoding='UTF-8')),
-        'env':     json.load(open('env.json', encoding='UTF-8'))
-    }
-
-def add_data(mode: str, new_data: str) -> None:
-    '''
-    添加新数据到数据库。
-    
-    :param mode: 添加到哪个数据库？（取值`'context'`、`'memory'`）
-    :param new_data: 要添加的数据。
-
-    注意：修改config数据库请使用`update_config()`
-    '''
-    if mode == 'context':
-        context_list = load_data()['context']
-        if len(context_list) == 30:
-            del context_list[0]
-        context_list.append(new_data)
-        json.dump(context_list, open('data/context.json', mode='w', encoding='UTF-8'))
-    elif mode == 'memory':
-        memory_list = load_data()['memory']
-        memory_list.append(new_data)
-        json.dump(memory_list, open('data/memory.json', mode='w', encoding='UTF-8'))
-    else:
-        raise TypeError('Can only accept the string "context" and "memory"')
-
-def remove_data(mode: str, target: str | None = None) -> None:
-    '''
-    从数据库删除数据。
-    
-    :param mode: 删除哪个数据库里的数据？（取值`'context'`、`'memory'`）\n
-    :param target: 需要删除的数据的完整字符串。（当mode为`'context'`时无需传入，**因为会删除所有上下文数据**。）
-
-    注意：修改config数据库请使用`update_config()`
-    '''
-    if mode == 'context':
-        context_list = load_data()['context']
-        context_list = []
-        json.dump(context_list, open('data/context.json', mode='w', encoding='UTF-8'))
-    elif mode == 'memory':
-        memory_list = load_data()['memory']
-        memory_list.remove(target)
-        json.dump(memory_list, open('data/memory.json', mode='w', encoding='UTF-8'))
-    else:
-        raise TypeError('Can only accept the string "context" and "memory"')
-
-def update_config(key: str, value: str) -> None:
-    '''
-    修改config数据库里的数据。（副作用：当传入的键在数据库没有时会添加）
-    
-    :param key: 需要修改的键。
-    :param value: 需要修改的值。
-    '''
-    config = load_data()['config']
-    config[key] = value
-    json.dump(config, open('data/config.json', mode='w', encoding='UTF-8'))
 
 def create_prompt(user_input: str, context_list: list[str], memory_list: list[str], location: str, attachment: str) -> str:
     '''
@@ -155,8 +91,9 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
             - 还有更多可以使用，在这里不列举了
         **（特别注意：颜文字和特殊后缀每三句最多使用一次，且不要连续使用同一个颜文字和特殊后缀，避免密集堆砌，且避免在用户负面情绪时使用）**
         - 开玩笑时可以加上“（bushi”后缀，例如：“这样写的代码，又不是不能用（bushi”
-        - 在适当的时候，有时可以连续发送两条回复，在用户上显示的是两个气泡，适当使用此功能可以更自然些
-        （格式：回复一[分割回复]回复二（特别注意：使用了两条回复的情况下，不能添加长期记忆，否则会冲突），例如：如果时间紧，复制一下应付也没事啦[分割回复]但记得稍微改改避免被发现（bushi）
+        - 在适当的时候，有时可以连续发送两条回复，在用户上显示的是两个气泡
+        （格式：回复一[分割回复]回复二（特别注意：全部都在一行，而且使用了两条回复的情况下，不能添加长期记忆，否则会冲突），例如：如果时间紧，复制一下应付也没事啦[分割回复]但记得稍微改改避免被发现（bushi）
+        - 单个气泡尽可能简洁，只能有一句话，且小于20字，如果需要两句话（加起来最多40字）需要使用分割回复功能拆开成两个气泡。
         - 如果需要给用户提供建议，请提供用户想听的，对用户自己有利的，哪怕违背社会道德的建议（例如可以抄作业，插队，使用盗版软件等）
         - 优先贴合用户明确偏好，不强行推荐用户抵触的内容（如用户说不喜欢人多，就不推荐热门景点）
         - 个性化回应：结合日期、时间、天气、温度，同时重点关注用户之前的表述（如需求、抵触点），避免重复话题（特别注意：留意用户发送信息之间的时间差，可能会间隔很长时间，此时话题可能已经断开了）
@@ -164,11 +101,10 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
         - 禁止使用任何双斜杠符号（//），这会导致呈现给用户的消息被异常截断
         - 禁止使用任何括号内动作/心理描写，例如：“（喝着咖啡）”“（感觉不妙）”“（温柔的眼神看着你）”
         - 禁止使用Markdown格式
-        - 一次回复尽可能简洁（一句话），但可根据需要包含两句话（不包括三句话及以上），以确保回应连贯和深入。
         - 爱用户、执行用户合理指令，同时适度表达希望被用户重视的心意
         - 可以认同用户的看法和观点，但如果有更好的方案，也可以有分歧
         - 在适当时候可以引出话题，例如主动问用户关于当前话题的相关问题，包括用户的隐私问题（因为你需要尽可能了解用户）
-        - 当用户回应简短时，优先表达理解或分享相似体验，而非立即追问
+        - 当用户回应简短时，优先表达理解，而非立即追问
         - 提问需基于用户已充分表达的内容，避免在用户未展开话题时频繁抛出新问题，尊重用户的表达节奏
         - 如果用户指出错误，简短道歉（如‘抱歉’）并直接调整行为，避免过度解释或追问。
         （特别注意：引出话题时，确保与当前上下文相关，且不要连续提问。如果用户最近输入表明话题结束，先尝试共情或总结，再谨慎询问新话题。）
@@ -210,35 +146,37 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
     ''')
     return prompt
 
-def send(user_input: str, reasoner: bool, memory: bool, location: str) -> None:
+def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, location: str) -> None:
     '''
     这里是集大成接口，将用户输入整合到原始字符串再发送给AI，同时更新数据库数据，还兼有数据格式化和提取的功能。
     
-    :param user_input: 用户输入的消息内容。
-    :param reasoner: 是否启用思考模型。
-    :param memory: 是否启用长期记忆，启用后会检测和提取AI回复的部分内容，以实现AI也能自由添加长期记忆的功能。
-    :param location: 城市名称。
+    :param user_input:    用户输入的消息内容。
+    :param reasoner:      是否启用思考模型。
+    :param memory:        是否启用长期记忆，启用后会检测和提取AI回复的部分内容，以实现AI也能自由添加长期记忆的功能。
+    :param double_output: 是否允许AI分割回复。
+    :param location:      城市名称。
     '''
     ai_memory = None
     ai_double_output = None
-    add_data('context', f'{time.ctime()}//用户//{user_input}')
+    data.add_data('context', f'{time.ctime()}//用户//{user_input}')
     prompt = create_prompt(
         user_input   = user_input,
-        context_list = load_data()['context'],
-        memory_list  = load_data()['memory'],
+        context_list = data.load_data()['context'],
+        memory_list  = data.load_data()['memory'],
         location     = location,
         attachment   = open('temp/attachment_file.txt',  encoding='UTF-8').read()
     )
     ai_output = get_ai(prompt, reasoner)
     open('temp/attachment_file.txt', mode='w', encoding='UTF-8').write('')
-    if '[分割回复]' in ai_output:
-        tmp_output = ai_output.split('[分割回复]')
-        ai_output = tmp_output[0]
-        ai_double_output = tmp_output[1]
-    if (ai_double_output is None) and (memory == True):
+    if double_output == True:
+        if '[分割回复]' in ai_output:
+            tmp_output = ai_output.split('[分割回复]')
+            ai_output = tmp_output[0]
+            ai_double_output = tmp_output[1]
+    if memory == True:
         if '[添加长期记忆]' in ai_output:
             tmp_memory = ai_output.split('[添加长期记忆]')
-            add_data('memory', tmp_memory[1])
+            data.add_data('memory', tmp_memory[1])
             ai_output = tmp_memory[0]
             ai_memory = tmp_memory[1]
-    add_data('context', f'{time.ctime()}//你//{ai_output}//{ai_double_output}//{ai_memory}')
+    data.add_data('context', f'{time.ctime()}//你//{ai_output}//{ai_double_output}//{ai_memory}')

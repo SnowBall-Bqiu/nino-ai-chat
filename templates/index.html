@@ -25,7 +25,7 @@
                     <span class="message shell" id="submit_show_shell">等待对方回复...</span>
                     <form action="/send" method="post" id="form" enctype="multipart/form-data">
                         <div id="user-input-from">
-                            <input type="text" required maxlength="100" name="content" id="content" placeholder="发送消息...">
+                            <input type="text" required maxlength="186" name="content" id="content" placeholder="发送消息...">
                             <input type="file" name="attachment_file" id="attachment_file" 
                             accept=".txt,.md,.rtf,.log,.asc,.text,.csv,.tsv,.tab,.psv,.ssv,
                                 .html,.htm,.css,.js,.ts,.json,.xml,.php,.py,.java,
@@ -38,6 +38,8 @@
                         <label for="reasoner" id="reasoner-text">使用思考模型</label>
                         <input type="checkbox" {% if memory %} checked="on" {% endif %} name="memory" id="memory">
                         <label for="memory" id="memory-text">允许写入长期记忆</label>
+                        <input type="checkbox" {% if double_output %} checked="on" {% endif %} name="double_output" id="double_output">
+                        <label for="double_output" id="double_output-text">允许分割回复</label>
                     </form>
                 </div>
             </div>
@@ -48,13 +50,13 @@
             <span class="modal-close">X</span>
             <div class="modal-content">
                 <h2 class="modal-title">Nino🍥</h2>
-                <p class="modal-version">ver 1.8.0</p>
+                <p class="modal-version">ver 2.0.0</p>
                 <div class="modal-info">
                     <p>作者：Pinpe</p>
                     <p>技术栈：Python、Flask、jQuery</p>
                     <p>依赖：flask、requests、openai</p>
                     <p>开源协议：GPL-3.0</p>
-                    <p>官网：<a href="https://github.com/Pinpe/nino-ai-chat" target="_blank" class="modal-link">https://github.com/Pinpe/nino-ai-chat</a></p>
+                    <p>仓库：<a href="https://github.com/Pinpe/nino-ai-chat" target="_blank" class="modal-link">https://github.com/Pinpe/nino-ai-chat</a></p>
                 </div>
                 <div class="modal-desc">
                     <p>Nino是AI聊天软件，会尝试了解你，理解你，并且可以永远记住重要记忆，会根据用户输入、上下文、长期记忆库和外部环境对你返回可爱的回复，可用于聊天和日常心理调适。</p>
@@ -72,7 +74,9 @@
                         <input type="checkbox" {% if show_memory %} checked="on" {% endif %} name="show-memory" id="show-memory">
                         <label for="show-memory" id="show-memory-text" style="margin-bottom: 15px;">显示新添加的长期记忆</label><br>
                         <label for="location" id="location-text">居住城市：</label>
-                        <input type="text" value="{{ location }}" required maxlength="5" name="location" id="location" style="margin-bottom: 10px;"><br>
+                        <input type="text" value="{{ location }}" required maxlength="4" name="location" id="location" style="margin-bottom: 10px;"><br>
+                        <label for="location" id="location-text">密码锁密码（为空不设置）：</label>
+                        <input type="text" value="{{ login_password }}" maxlength="6" name="login-password" id="location" style="margin-bottom: 10px;"><br>
                         <label for="left-image" id="location-text">背景图URL：</label>
                         <input type="text" value="{{ left_image }}" required name="left-image" id="left-image-src" style="margin-bottom: 10px;">
                         <label for="left-image" id="location-text">模型的base_url：</label>
@@ -97,7 +101,7 @@
                 <div class="update-info">
                     <div class="update-row">
                         <span class="update-label">当前版本</span>
-                        <span class="update-value">1.8.0</span>
+                        <span class="update-value">2.0.0</span>
                     </div>
                     <div class="update-row">
                         <span class="update-label">最新版本</span>
@@ -286,11 +290,11 @@
                 margin-bottom: 12px;
             }
 
-            #reasoner, #memory, #show-memory {
+            #reasoner, #memory, #show-memory, #double_output {
                 accent-color: #FFE0B2;
                 display: inline-block;
             }
-            #memory{
+            #memory, #double_output{
                 margin-left: 20px;
             }
 
@@ -320,7 +324,7 @@
                 border-color: #FF9800;
             }
 
-            #location, #left-image-src {
+            #location, #left-image-src, #login_password {
                 padding: 5px 15px;
                 width: 100px;
                 border: 2px solid #FFE0B2;
@@ -332,6 +336,8 @@
             #left-image-src{
                 width: 400px;
             }
+
+
 
             #location:focus {
                 outline: none;

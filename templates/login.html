@@ -1,0 +1,142 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+        <title>请输入密码</title>
+        <script src="{{ url_for('static', filename='jquery-2.0.2.min.js') }}"></script>
+    </head>
+    <body>
+        <div class="password-container">
+            <h2 class="modal-title">Nino🍥</h2>
+            <form action="/login_submit" method="post" id="password-form">
+                <div class="password-input-group">
+                    <input type="password" required name="password" id="password" placeholder="请输入密码...">
+                    <button type="submit" id="submit-btn">确定</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            $(function(){
+                // 可选：表单提交前的简单验证
+                $('#password-form').submit(function(e){
+                    if($.trim($('#password').val()) === ''){
+                        e.preventDefault();
+                        alert('请输入密码后再提交');
+                    }
+                })
+            })
+        </script>
+
+        <style>
+            @font-face {
+                font-family: font;
+                src: url({{ url_for('static', filename='font.ttf') }});
+            }
+            * {
+                font-family: font;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background-color: #fff9f0;
+                color: #5D4037;
+                min-height: 100vh;
+                padding: 0;
+                margin: 0 auto;
+                line-height: 1.6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* 密码容器，居中显示 */
+            .password-container {
+                width: 100%;
+                max-width: 400px;
+                padding: 40px 20px;
+                text-align: center;
+            }
+
+            .password-input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+
+            /* 密码输入框样式，匹配原有输入框风格 */
+            #password {
+                width: 100%;
+                max-width: 320px;
+                padding: 15px 20px;
+                border: 2px solid #FFE0B2;
+                border-radius: 25px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                color: #5D4037;
+                text-align: center;
+            }
+
+            #password::placeholder {
+                color: #D7CCC8;
+                text-align: center;
+            }
+
+            #password:focus {
+                outline: none;
+                border-color: #FF9800;
+            }
+
+            /* 确定按钮样式，匹配原有按钮风格 */
+            #submit-btn {
+                background-color: #FFE0B2;
+                border: none;
+                padding: 12px 35px;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                color: #5D4037;
+                line-height: 1;
+                margin-bottom: 50px;
+            }
+
+            #submit-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            #submit-btn:active {
+                transform: translateY(0);
+            }
+
+            #submit-btn:disabled {
+                background-color: #FFE0B2;
+                opacity: 0.7;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            h2{
+                font-size: 55px;
+                margin-bottom: 20px;
+            }
+
+            /* 响应式调整 */
+            @media (max-width: 768px) {
+                #password {
+                    padding: 12px 15px;
+                    font-size: 15px;
+                }
+
+                #submit-btn {
+                    padding: 10px 30px;
+                    font-size: 15px;
+                }
+            }
+        </style>
+    </body>
+</html>
