@@ -2,7 +2,7 @@
     "location": "常州",
     "show_memory": true,
     "left_image": "http://127.0.0.1:5000/static/theme-img.webp",
-    "first_use": "false",
+    "first_use": "true",
     "model_base_url": "https://api.deepseek.com",
     "reasoner_model": "deepseek-reasoner",
     "common_model": "deepseek-chat",
