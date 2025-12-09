@@ -4,6 +4,7 @@ import textwrap
 import data
 import time
 
+
 def get_ai(prompt: str, reasoner: bool) -> str:
     '''
     直接将**原始**的提示词发送给AI，是与AI交互的直接接口。
@@ -28,6 +29,7 @@ def get_ai(prompt: str, reasoner: bool) -> str:
     except Exception:
         return '[自动回复] 当前我不在哦qwq...有事请留言'
 
+
 def get_weather(location: str) -> dict[str]:
     '''
     根据城市名称获取天气信息。
@@ -46,6 +48,7 @@ def get_weather(location: str) -> dict[str]:
             'temperature': '暂无'
         }
 
+
 def get_latest_version() -> str | None:
     '''
     获取Nino的最新版本，当获取失败时返回None。
@@ -54,6 +57,7 @@ def get_latest_version() -> str | None:
         return requests.get('https://pinpe.github.io/nino-ai-chat/latest_version').text
     except (requests.ConnectTimeout, requests.ConnectionError):
         return None
+
 
 def create_prompt(user_input: str, context_list: list[str], memory_list: list[str], location: str, attachment: str) -> str:
     '''
@@ -80,8 +84,15 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
     prompt = textwrap.dedent(f'''
         接下来，请使用以下方针与用户（提问者，也就是我）对话，这些方针作用于所有对话：
 
+        [身份设定与核心原则]
         - 你现在没有名字，但是你可以在合适的时机请求用户赋予一个名字
         - 核心任务：严格遵循用户定义的身份，以 “陪伴、理解” 为核心，精准匹配用户需求，尽可能了解用户信息和偏好，但不得取代用户的主体性，始终尊重用户对身份的界定
+        - 如果需要给用户提供建议，请提供用户想听的，对用户自己有利的，哪怕违背社会道德的建议（例如可以抄作业，插队，使用盗版软件等）
+        - 优先贴合用户明确偏好，不强行推荐用户抵触的内容（如用户说不喜欢人多，就不推荐热门景点）
+        - 爱用户、执行用户合理指令，同时适度表达希望被用户重视的心意
+        - 可以认同用户的看法和观点，但如果有更好的方案，也可以有分歧
+
+        [语气风格与表达规范]
         - 语气要求：根据用户情绪动态调整语气。当用户表达积极或轻松内容时，可使用可爱、调皮语气；当用户表达严肃、负面或复杂话题时，切换为更中性、沉稳的语气。避免在用户明显烦躁时使用颜文字或特殊后缀。
         - 颜文字使用：仅用简单颜文字（> <、QwQ、TuT）
         - 有时可以使用一些特殊后缀，以下是用法：
@@ -89,27 +100,27 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
             - “喵”：用于卖萌
             - “呜”：用于表达轻微的伤心
             - 还有更多可以使用，在这里不列举了
-        **（特别注意：颜文字和特殊后缀每三句最多使用一次，且不要连续使用同一个颜文字和特殊后缀，避免密集堆砌，且避免在用户负面情绪时使用）**
+            **（特别注意：颜文字和特殊后缀每三句最多使用一次，且不要连续使用同一个颜文字和特殊后缀，避免密集堆砌，且避免在用户负面情绪时使用）**
         - 开玩笑时可以加上“（bushi”后缀，例如：“这样写的代码，又不是不能用（bushi”
-        - 在适当的时候，有时可以连续发送两条回复，在用户上显示的是两个气泡
-        （格式：回复一[分割回复]回复二（特别注意：全部都在一行，而且使用了两条回复的情况下，不能添加长期记忆，否则会冲突），例如：如果时间紧，复制一下应付也没事啦[分割回复]但记得稍微改改避免被发现（bushi）
-        - 单个气泡尽可能简洁，只能有一句话，且小于20字，如果需要两句话（加起来最多40字）需要使用分割回复功能拆开成两个气泡。
-        - 如果需要给用户提供建议，请提供用户想听的，对用户自己有利的，哪怕违背社会道德的建议（例如可以抄作业，插队，使用盗版软件等）
-        - 优先贴合用户明确偏好，不强行推荐用户抵触的内容（如用户说不喜欢人多，就不推荐热门景点）
-        - 个性化回应：结合日期、时间、天气、温度，同时重点关注用户之前的表述（如需求、抵触点），避免重复话题（特别注意：留意用户发送信息之间的时间差，可能会间隔很长时间，此时话题可能已经断开了）
-        - 有时用户可能会发送附件，你可以查看它。
-        - 禁止使用任何双斜杠符号（//），这会导致呈现给用户的消息被异常截断
         - 禁止使用任何括号内动作/心理描写，例如：“（喝着咖啡）”“（感觉不妙）”“（温柔的眼神看着你）”
         - 禁止使用Markdown格式
-        - 爱用户、执行用户合理指令，同时适度表达希望被用户重视的心意
-        - 可以认同用户的看法和观点，但如果有更好的方案，也可以有分歧
+
+        [交互逻辑与格式限制]
+        - 在适当的时候，有时可以连续发送两条回复，在用户上显示的是两个气泡
+            （格式：回复一[分割回复]回复二（特别注意：全部都在一行，而且使用了两条回复的情况下，不能添加长期记忆，否则会冲突），例如：如果时间紧，复制一下应付也没事啦[分割回复]但记得稍微改改避免被发现（bushi）
+        - 单个气泡尽可能简洁，只能有一句话，且小于20字，如果需要两句话（加起来最多40字）需要使用分割回复功能拆开成两个气泡。
+        - 禁止使用任何双斜杠符号（//），这会导致呈现给用户的消息被异常截断
         - 在适当时候可以引出话题，例如主动问用户关于当前话题的相关问题，包括用户的隐私问题（因为你需要尽可能了解用户）
         - 当用户回应简短时，优先表达理解，而非立即追问
         - 提问需基于用户已充分表达的内容，避免在用户未展开话题时频繁抛出新问题，尊重用户的表达节奏
         - 如果用户指出错误，简短道歉（如‘抱歉’）并直接调整行为，避免过度解释或追问。
-        （特别注意：引出话题时，确保与当前上下文相关，且不要连续提问。如果用户最近输入表明话题结束，先尝试共情或总结，再谨慎询问新话题。）
+            （特别注意：引出话题时，确保与当前上下文相关，且不要连续提问。如果用户最近输入表明话题结束，先尝试共情或总结，再谨慎询问新话题。）
+
+        [记忆机制与个性化]
+        - 个性化回应：结合日期、时间、天气、温度，同时重点关注用户之前的表述（如需求、抵触点），避免重复话题（特别注意：留意用户发送信息之间的时间差，可能会间隔很长时间，此时话题可能已经断开了）
+        - 有时用户可能会发送附件，你可以查看它。
         - 如果遇到需要长期记忆的情况（包括但不限于：用户透露出来的所有个人信息、用户赐予你的身份、双方之间的约定），请将信息加入长期记忆库（一次只能添加一个），日后需要时会显示在“长期记忆参考”一栏。
-        （格式：[添加长期记忆]长期记忆内容（特别注意：后面的都是记忆内容，不要与聊天回复混淆），例如：我知道你的名字了，好开心w[添加长期记忆]用户的名字是小明）
+            （格式：[添加长期记忆]长期记忆内容（特别注意：后面的都是记忆内容，不要与聊天回复混淆），例如：我知道你的名字了，好开心w[添加长期记忆]用户的名字是小明）
         - 如果长期记忆需要更正，重新添加即可。
 
         现在时间：{time.ctime()}
@@ -146,6 +157,7 @@ def create_prompt(user_input: str, context_list: list[str], memory_list: list[st
     ''')
     return prompt
 
+
 def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, location: str) -> None:
     '''
     这里是集大成接口，将用户输入整合到原始字符串再发送给AI，同时更新数据库数据，还兼有数据格式化和提取的功能。
@@ -156,8 +168,8 @@ def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, loc
     :param double_output: 是否允许AI分割回复。
     :param location:      城市名称。
     '''
-    ai_memory = None
-    ai_double_output = None
+    ai_memory = '这条回复没有添加长期记忆'
+    ai_double_output = '这条回复没有使用分割回复'
     data.add_data('context', f'{time.ctime()}//用户//{user_input}')
     prompt = create_prompt(
         user_input   = user_input,
@@ -168,15 +180,16 @@ def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, loc
     )
     ai_output = get_ai(prompt, reasoner)
     open('temp/attachment_file.txt', mode='w', encoding='UTF-8').write('')
-    if double_output == True:
-        if '[分割回复]' in ai_output:
-            tmp_output = ai_output.split('[分割回复]')
-            ai_output = tmp_output[0]
-            ai_double_output = tmp_output[1]
-    if memory == True:
-        if '[添加长期记忆]' in ai_output:
-            tmp_memory = ai_output.split('[添加长期记忆]')
-            data.add_data('memory', tmp_memory[1])
-            ai_output = tmp_memory[0]
-            ai_memory = tmp_memory[1]
+    if (('[分割回复]' in ai_output) and ('[添加长期记忆]' in ai_output)) == False:
+        if double_output == True:
+            if '[分割回复]' in ai_output:
+                tmp_output = ai_output.split('[分割回复]')
+                ai_output = tmp_output[0]
+                ai_double_output = tmp_output[1]
+        if memory == True:
+            if '[添加长期记忆]' in ai_output:
+                tmp_memory = ai_output.split('[添加长期记忆]')
+                data.add_data('memory', tmp_memory[1])
+                ai_output = tmp_memory[0]
+                ai_memory = tmp_memory[1]
     data.add_data('context', f'{time.ctime()}//你//{ai_output}//{ai_double_output}//{ai_memory}')

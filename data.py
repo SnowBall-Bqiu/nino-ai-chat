@@ -1,5 +1,15 @@
 import json
 
+
+def _json_dump(context, file_path):
+    json.dump(
+        context,
+        open(file_path, mode='w', encoding='UTF-8'),
+        ensure_ascii = False,
+        indent       = 4
+    )
+
+
 def load_data() -> dict[str]:
     '''
     从数据库和环境变量加载数据。
@@ -10,6 +20,7 @@ def load_data() -> dict[str]:
         'config':  json.load(open('data/config.json', encoding='UTF-8')),
         'env':     json.load(open('env.json', encoding='UTF-8'))
     }
+
 
 def add_data(mode: str, new_data: str) -> None:
     '''
@@ -25,13 +36,14 @@ def add_data(mode: str, new_data: str) -> None:
         if len(context_list) == 30:
             del context_list[0]
         context_list.append(new_data)
-        json.dump(context_list, open('data/context.json', mode='w', encoding='UTF-8'))
+        _json_dump(context_list, 'data/context.json')
     elif mode == 'memory':
         memory_list = load_data()['memory']
-        memory_list.append(new_data)
-        json.dump(memory_list, open('data/memory.json', mode='w', encoding='UTF-8'))
+        memory_list.append(new_data.replace('\n', ''))
+        _json_dump(memory_list, 'data/memory.json')
     else:
-        raise TypeError('Can only accept the string "context" and "memory"')
+        raise ValueError('Can only accept the string "context" and "memory"')
+
 
 def remove_data(mode: str, target: str | None = None) -> None:
     '''
@@ -45,13 +57,14 @@ def remove_data(mode: str, target: str | None = None) -> None:
     if mode == 'context':
         context_list = load_data()['context']
         context_list = []
-        json.dump(context_list, open('data/context.json', mode='w', encoding='UTF-8'))
+        _json_dump(context_list, 'data/context.json')
     elif mode == 'memory':
         memory_list = load_data()['memory']
         memory_list.remove(target)
-        json.dump(memory_list, open('data/memory.json', mode='w', encoding='UTF-8'))
+        _json_dump(memory_list, 'data/memory.json')
     else:
-        raise TypeError('Can only accept the string "context" and "memory"')
+        raise ValueError('Can only accept the string "context" and "memory"')
+
 
 def update_config(key: str, value: str) -> None:
     '''
@@ -64,4 +77,4 @@ def update_config(key: str, value: str) -> None:
     if key not in config:
         raise KeyError('Key not found')
     config[key] = value
-    json.dump(config, open('data/config.json', mode='w', encoding='UTF-8'))
+    _json_dump(config, 'data/config.json')

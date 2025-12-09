@@ -4,12 +4,17 @@ import data
 import core
 import time
 
+
 shell                          = Flask(__name__)
 shell.jinja_env.filters['zip'] = zip
-reasoner                       = True
-memory                         = True
-double_output                  = True
-login_done                     = False
+
+
+class state:
+    reasoner      = True
+    memory        = True
+    double_output = True
+    login_done    = False
+
 
 def alert(text, redirect):
     return f'''
@@ -19,23 +24,24 @@ def alert(text, redirect):
         </script>
     '''
 
+
 @shell.route('/login')
 def pub_login():
     return render_template('login.html')
 
+
 @shell.route('/login_submit', methods=['POST'])
 def login_submit():
-    global login_done
     if request.form.get('password') == data.load_data()['config']['login_password']:
-        login_done = True
+        state.login_done = True
         return redirect('/')
     else:
         return alert('密码似乎是错误的', '/login')
 
+
 @shell.route('/')
 def pub_root():
-    global login_done
-    if (login_done == False) and (data.load_data()['config']['login_password'] != ''):
+    if (state.login_done == False) and (data.load_data()['config']['login_password'] != ''):
         return redirect('/login')
     context_pairs = []
     for i in data.load_data()['context']:
@@ -44,9 +50,9 @@ def pub_root():
             context_pairs.append(('user', parts[2]))
         else:
             context_pairs.append(('ai', parts[2]))
-            if parts[3] != 'None':
+            if parts[3] != '这条回复没有使用分割回复':
                 context_pairs.append(('ai', parts[3]))
-            if parts[4] != 'None' and data.load_data()['config']['show_memory'] == True:
+            if parts[4] != '这条回复没有添加长期记忆' and data.load_data()['config']['show_memory'] == True:
                 context_pairs.append(('shell', f"{parts[4]}，已经记住了w"))
     if not context_pairs:
         context_pairs.append(('shell', '当前还没有上下文，打个招呼吧qwq'))
@@ -57,9 +63,9 @@ def pub_root():
         context_list      = context_list,
         context_type_list = context_type_list,
         # 聊天时的临时设置
-        reasoner          = reasoner or None,
-        memory            = memory or None,
-        double_output     = double_output or None,
+        reasoner          = state.reasoner or None,
+        memory            = state.memory or None,
+        double_output     = state.double_output or None,
         # 最新版本号获取
         latest_version    = core.get_latest_version(),
         # 永久设置
@@ -73,27 +79,27 @@ def pub_root():
         first_use         = data.load_data()['config']['first_use']
     )
 
+
 @shell.route('/send', methods=['POST'])
 def send():
-    global reasoner, memory, double_output
-    reasoner = False if request.form.get('reasoner') is None else True
-    memory = False if request.form.get('memory') is None else True
-    double_output = False if request.form.get('double_output') is None else True
+    state.reasoner = False if request.form.get('reasoner') is None else True
+    state.memory = False if request.form.get('memory') is None else True
+    state.double_output = False if request.form.get('double_output') is None else True
     file = request.files['attachment_file']
     file.save('temp/attachment_file.txt')
     core.send(
         user_input    = request.form.get('content'),
-        reasoner      = reasoner,
-        memory        = memory,
-        double_output = double_output,
+        reasoner      = state.reasoner,
+        memory        = state.memory,
+        double_output = state.double_output,
         location      = data.load_data()['config']['location']
     )
     return redirect('/#memory-text')
 
+
 @shell.route('/config', methods=['POST'])
 def config_():
-    global login_done
-    login_done = True
+    state.login_done = True
     data.update_config('first_use', 'false')
     data.update_config('show_memory', False if request.form.get('show-memory') is None else True)
     data.update_config('location', request.form.get('location'))
@@ -104,6 +110,7 @@ def config_():
     data.update_config('common_model', request.form.get('common-model'))
     return redirect('/')
 
+
 @shell.route('/data')
 def pub_data():
     return render_template(
@@ -112,46 +119,58 @@ def pub_data():
         tip         = '当前没有长期记忆，去创造美好的回忆吧qwq' if data.load_data()['memory'] == [] else ''
     )
 
+
 @shell.route('/add-memory', methods=['POST'])
 def add_memory():
     data.add_data('memory', request.form.get("memory_content"))
     return redirect('/data')
+
 
 @shell.route('/remove-memory', methods=['POST'])
 def remove_memory():
     data.remove_data('memory', request.form.get('memory'))
     return redirect('/data')
 
+
 @shell.route('/remove-context')
 def remove_context():
     data.remove_data('context')
     return redirect('/data')
 
+
 @shell.route('/export-memory')
 def export_memory():
-    return send_file(f'data/memory.json', as_attachment=True)
+    return send_file(
+        'data/memory.json',
+        download_name = f'{time.ctime()}_memory.json',
+        as_attachment = True
+    )
+
 
 @shell.route('/export-context')
 def export_context():
-    return send_file('data/context.json', as_attachment=True)
+    return send_file(
+        'data/context.json',
+        download_name = f'{time.ctime()}_context.json',
+        as_attachment = True
+    )
+
 
 @shell.route('/import-memory', methods=['POST'])
 def import_memory():
     file = request.files['memory_file']
-    if file.filename == 'memory.json':
-        file.save(f'data/{file.filename}')
-        return redirect('/data')
-    else:
-        return alert('请上传正确的文件', '/data')
+    file.filename = 'memory.json'
+    file.save(f'data/{file.filename}')
+    return redirect('/data')
+
 
 @shell.route('/import-context', methods=['POST'])
 def import_context():
     file = (request.files['context_file'])
-    if file.filename == 'context.json':
-        file.save(f'data/{file.filename}')
-        return redirect('/data')
-    else:
-        return alert('请上传正确的文件', '/data')
+    file.filename = 'context.json'
+    file.save(f'data/{file.filename}')
+    return redirect('/data')
+
 
 @shell.route('/debug')
 def pub_debug():
@@ -163,6 +182,7 @@ def pub_debug():
         memory_list  = data.load_data()['memory'],
         context_list = data.load_data()['context']
     )
+
 
 if __name__ == '__main__':
     shell.run(debug=True)

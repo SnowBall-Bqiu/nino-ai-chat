@@ -1,4 +1,6 @@
-![](/logo.png)
+![](readme_src/logo.png)
+
+![](readme_src/poster.png)
 
 # Nino🍥
 
@@ -59,6 +61,10 @@ python shell.py
 - 第三方依赖：flask、openai、requests
 - API服务：Deepseek AI API、心知天气API
 - 数据存储：JSON文件（本地存储）
+
+## 📊 架构图
+
+![](readme_src/mermaid.png)
 
 ## ⚠️ 注意事项
 1. AI回复可能存在「幻觉」（虚构信息），请理性判断，Nino及其作者不承担相关责任
