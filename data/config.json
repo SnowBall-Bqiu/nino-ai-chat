@@ -6,5 +6,6 @@
     "model_base_url": "https://api.deepseek.com",
     "reasoner_model": "deepseek-reasoner",
     "common_model": "deepseek-chat",
-    "login_password": ""
+    "login_password": "",
+    "theme_color": "FAC387"
 }

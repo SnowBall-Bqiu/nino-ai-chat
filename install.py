@@ -52,6 +52,14 @@ except Exception:
     whl_err = True
 
 try:
+    import typer
+    print(f'{green}    [O] typer       已安装{rst}')
+except Exception:
+    print(f'{red}    [!] typer       未安装{rst}')
+    whl_err = True
+
+
+try:
     open('env.json')
     print(f'{green}    [O] env文件     可以读取{rst}\n')
 except Exception:
@@ -72,7 +80,7 @@ if env_err == False and whl_err == False:
 print(f'按下{yellow}回车键{rst}以修复问题，{yellow}Ctrl+C{rst}退出')
 input()
 if whl_err == True:
-    os.system('pip install flask openai requests')
+    os.system('pip install flask openai requests typer')
 if env_err == True:
     open('env.json', mode='w').write('{\n    "ai_api_key": "",\n    "weather_api_key": ""\n}')
 print(f'{green}修复完成！{rst}可尝试重新运行此脚本以确认是否修复成功。')

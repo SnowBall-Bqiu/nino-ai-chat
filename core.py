@@ -170,7 +170,7 @@ def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, loc
     '''
     ai_memory = '这条回复没有添加长期记忆'
     ai_double_output = '这条回复没有使用分割回复'
-    data.add_data('context', f'{time.ctime()}//用户//{user_input}')
+    data.add_data('context', f'{time.ctime()}//{time.strftime('%d', time.localtime(time.time()))}//用户//{user_input}')
     prompt = create_prompt(
         user_input   = user_input,
         context_list = data.load_data()['context'],
@@ -192,4 +192,4 @@ def send(user_input: str, reasoner: bool, memory: bool, double_output: bool, loc
                 data.add_data('memory', tmp_memory[1])
                 ai_output = tmp_memory[0]
                 ai_memory = tmp_memory[1]
-    data.add_data('context', f'{time.ctime()}//你//{ai_output}//{ai_double_output}//{ai_memory}')
+    data.add_data('context', f'{time.ctime()}//{time.strftime('%d', time.localtime(time.time()))}//你//{ai_output}//{ai_double_output}//{ai_memory}')

@@ -27,7 +27,7 @@ def alert(text, redirect):
 
 @shell.route('/login')
 def pub_login():
-    return render_template('login.html')
+    return render_template('login.html', theme_color=data.load_data()['config']['theme_color'])
 
 
 @shell.route('/login_submit', methods=['POST'])
@@ -41,19 +41,23 @@ def login_submit():
 
 @shell.route('/')
 def pub_root():
+    last_hour = 0
     if (state.login_done == False) and (data.load_data()['config']['login_password'] != ''):
         return redirect('/login')
     context_pairs = []
     for i in data.load_data()['context']:
         parts = str(i).split('//')
-        if parts[1] == '用户':
-            context_pairs.append(('user', parts[2]))
+        if parts[1] != last_hour:
+            context_pairs.append(('shell', parts[0]))
+        last_hour = parts[1]
+        if parts[2] == '用户':
+            context_pairs.append(('user', parts[3]))
         else:
-            context_pairs.append(('ai', parts[2]))
-            if parts[3] != '这条回复没有使用分割回复':
-                context_pairs.append(('ai', parts[3]))
-            if parts[4] != '这条回复没有添加长期记忆' and data.load_data()['config']['show_memory'] == True:
-                context_pairs.append(('shell', f"{parts[4]}，已经记住了w"))
+            context_pairs.append(('ai', parts[3]))
+            if parts[4] != '这条回复没有使用分割回复':
+                context_pairs.append(('ai', parts[4]))
+            if parts[5] != '这条回复没有添加长期记忆' and data.load_data()['config']['show_memory'] == True:
+                context_pairs.append(('shell', f"{parts[5]}，已经记住了w"))
     if not context_pairs:
         context_pairs.append(('shell', '当前还没有上下文，打个招呼吧qwq'))
     context_type_list, context_list = zip(*context_pairs)
@@ -72,6 +76,7 @@ def pub_root():
         show_memory       = data.load_data()['config']['show_memory'],
         location          = data.load_data()['config']['location'],
         login_password    = data.load_data()['config']['login_password'],
+        theme_color       = data.load_data()['config']['theme_color'],
         left_image        = data.load_data()['config']['left_image'],
         model_base_url    = data.load_data()['config']['model_base_url'],
         reasoner_model    = data.load_data()['config']['reasoner_model'],
@@ -104,6 +109,7 @@ def config_():
     data.update_config('show_memory', False if request.form.get('show-memory') is None else True)
     data.update_config('location', request.form.get('location'))
     data.update_config('login_password', request.form.get('login-password'))
+    data.update_config('theme_color', request.form.get('theme-color'))
     data.update_config('left_image', request.form.get('left-image'))
     data.update_config('model_base_url', request.form.get('model-base-url'))
     data.update_config('reasoner_model', request.form.get('reasoner-model'))
@@ -116,7 +122,8 @@ def pub_data():
     return render_template(
         'data.html',
         memory_list = data.load_data()['memory'],
-        tip         = '当前没有长期记忆，去创造美好的回忆吧qwq' if data.load_data()['memory'] == [] else ''
+        tip         = '当前没有长期记忆，去创造美好的回忆吧qwq' if data.load_data()['memory'] == [] else '',
+        theme_color = data.load_data()['config']['theme_color']
     )
 
 
