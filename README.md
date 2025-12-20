@@ -3,6 +3,7 @@
 ![](readme_src/poster.png)
 
 # Nino🍥
+[简体中文](README.md) | [English](README_en.md)
 
 Nino是一款轻量级、开源的AI聊天软件，专注于陪伴与理解用户。它能记住你的偏好、习惯和重要信息，结合时间、天气等环境因素，用可爱温柔的语气与你互动，可用于日常聊天、心理调适等场景。所有数据均存储在本地，隐私安全有保障～
 
@@ -17,18 +18,25 @@ Nino是一款轻量级、开源的AI聊天软件，专注于陪伴与理解用�
 
 ## 🚀 快速开始
 
-### 1. 环境要求
+90秒快速上手Nino，只需几步即可完成安装和配置，开始愉快的聊天～
+
+使用[Python源码部署](#一python源码部署)
+
+~~使用[Docker部署](#二docker部署)~~
+
+### 一、Python源码部署
+#### 1. 环境要求
 - Python 3.8+
 
-### 2. 安装依赖
-#### 自动安装（推荐）
+#### 2. 安装依赖
+##### 自动安装（推荐）
 运行项目根目录下的安装脚本：
 ```bash
 python install.py
 ```
 该脚本会自动安装所需依赖，并创建`env.json`配置文件。
 
-#### 手动安装
+##### 手动安装
 若自动安装失败，可手动执行以下命令：
 ```bash
 pip install flask openai requests
@@ -41,19 +49,27 @@ pip install flask openai requests
 }
 ```
 
-### 3. 配置API密钥
+#### 3. 配置API密钥
 Nino需要两个API密钥才能正常工作：
 - **AI API密钥**：使用Deepseek API，需前往[Deepseek官网](https://www.deepseek.com/)注册获取
 - **天气API密钥**：使用心知天气API，需前往[心知天气官网](https://www.seniverse.com/)注册获取
 
 将获取到的密钥填入`env.json`对应的字段中。
 
-### 4. 启动程序
+#### 4. 启动程序
 运行`shell.py`启动Flask服务：
 ```bash
 python shell.py
 ```
 服务启动后，浏览器访问 `http://127.0.0.1:5000` 即可使用Nino聊天～
+
+> ### 二、Docker部署
+> #### 1. 环境要求
+> - Docker 19.XX+
+> - Docker Compose 1.XX+
+> 
+> *咕咕咕* 教程还得再咕一阵子，因为自动化构建还未就绪
+
 
 ## 🛠️ 技术栈
 - 后端：Python、Flask
