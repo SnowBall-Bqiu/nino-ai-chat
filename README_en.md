@@ -22,7 +22,7 @@ Get started with Nino in 90 seconds. Just a few steps to complete installation a
 
 Use [Python Source Code Deployment](#-1-python-source-code-deployment)
 
-~~Use [Docker Deployment](#-2-docker-deployment)~~
+Use [Docker Deployment](#-2-docker-deployment)
 
 ### 1. Python Source Code Deployment
 #### 1. Environment Requirements
@@ -63,12 +63,45 @@ python shell.py
 ```
 After the service starts, access `http://127.0.0.1:5000` in your browser to use Nino for chatting～
 
-> ### 2. Docker Deployment
-> #### 1. Environment Requirements
-> - Docker 19.XX+
-> - Docker Compose 1.XX+
-> 
-> *emm...* The tutorial still needs to wait a bit, because the automated build is not ready yet
+### 2. Docker Deployment
+#### 1. Environment Requirements
+- Docker 19.XX+
+- Docker Compose 1.XX+
+
+#### 2. Deploy Service
+Docker image is published at [snowball181/nino-ai-chat](https://hub.docker.com/r/snowball181/nino-ai-chat)
+1. Create docker-compose.yml file
+```yml
+version: '3.8'  # Docker Compose file format version
+
+services:
+  nino:
+    image: snowball181/nino-ai-chat:latest  # Use the Docker Hub image (recommend to replace with specific version number)
+    container_name: nino-ai-chat  # Container name
+    ports:
+      - "5000:5000"  # Port mapping [host port:container port]
+    volumes:
+      - ./env.json:/app/env.json:ro  # Read-only mount of configuration file
+      - nino-data:/app/data  # Persistent data volume
+    restart: unless-stopped  # Automatically restarts on abnormal exit
+    environment:  # Environment variables
+      # - ai_api_key=your_ai_api_key_here
+      # - weather_api_key=your_weather_api_key_here
+
+    # networks:  # Custom networks can be uncommented if needed
+    #   - nino-network
+```
+2. Start service
+```bash
+docker-compose up -d
+```
+#### 3. Environment Variables
+| Variable Name | Required | Description |
+| --- | --- | --- |
+| ai_api_key | Y | Deepseek API Key |
+| weather_api_key | Y | Xintzhi Weather API Key |
+
+> Environment variables can be mounted through docker-compose.yml file, or set via docker's environment variables
 
 
 ## 🛠️ Tech Stack

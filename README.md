@@ -22,7 +22,7 @@ Nino是一款轻量级、开源的AI聊天软件，专注于陪伴与理解用�
 
 使用[Python源码部署](#一python源码部署)
 
-~~使用[Docker部署](#二docker部署)~~
+使用[Docker部署](#二docker部署)
 
 ### 一、Python源码部署
 #### 1. 环境要求
@@ -63,12 +63,44 @@ python shell.py
 ```
 服务启动后，浏览器访问 `http://127.0.0.1:5000` 即可使用Nino聊天～
 
-> ### 二、Docker部署
-> #### 1. 环境要求
-> - Docker 19.XX+
-> - Docker Compose 1.XX+
-> 
-> *咕咕咕* 教程还得再咕一阵子，因为自动化构建还未就绪
+### 二、Docker部署
+#### 1. 环境要求
+ - Docker 19.XX+
+ - Docker Compose 1.XX+
+#### 2. 部署服务
+Docker镜像已发布至 [snowball181/nino-ai-chat](https://hub.docker.com/r/snowball181/nino-ai-chat)
+1. 创建 docker-compose.yml 文件
+```yml
+version: '3.8'  # Docker Compose 文件格式版本
+
+services:
+  nino:
+    image: snowball181/nino-ai-chat:latest  # 使用 Docker Hub 上的镜像（建议替换为具体版本号）
+    container_name: nino-ai-chat  # 容器名称
+    ports:
+      - "5000:5000"  # 端口映射 [主机端口:容器端口]
+    volumes:
+      - ./env.json:/app/env.json:ro  # 只读方式挂载配置文件
+      - nino-data:/app/data  # 持久化数据卷
+    restart: unless-stopped  # 异常退出时自动重启
+    environment:  # 环境变量
+      # - ai_api_key=your_ai_api_key_here
+      # - weather_api_key=your_weather_api_key_here
+
+    # networks:  # 如需自定义网络可取消注释
+    #   - nino-network
+```
+2. 启动服务
+```bash
+docker-compose up -d
+```
+#### 3. 环境变量
+| 变量名 | 是否必须 | 说明 |
+| --- | --- | --- |
+| ai_api_key | Y | Deepseek API 密钥 |
+| weather_api_key | Y | 心知天气 API 密钥 |
+
+> 环境变量可通过 docker-compose.yml 文件中进行挂载，也可通过docker的环境变量进行设置
 
 
 ## 🛠️ 技术栈
